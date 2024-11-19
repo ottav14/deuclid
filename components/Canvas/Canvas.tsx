@@ -9,6 +9,7 @@ const Canvas = () => {
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [currentMode, setMode] = useState('circle');
 	const [currentColor, setCurrentColor] = useState('black'); // Default color
+	const circles = [];
 	const ctxRef = useRef(null);
 	const circleButtonRef = useRef();
 	const lineButtonRef = useRef();
@@ -17,18 +18,59 @@ const Canvas = () => {
 	   	"line": lineButtonRef
 	};
 
+	const circle = (x, y, r) => { 
+
+		const c = { x: x, y: y, r: r };
+		circles.push(c);
+
+		return c;
+	}
+
+	const drawCircle = (circle) => {
+		const canvas = canvasRef.current;
+		const ctx = canvas.getContext('2d');
+
+		ctx.beginPath(); 
+		ctx.arc(circle.x, circle.y, circle.r, 0, 2*Math.PI);
+		ctx.fill();
+		ctx.stroke();
+		ctx.closePath();
+	}
+
+	const drawCircles = () => {
+		for(let i=0; i<circles.length; i++) {
+			drawCircle(circles[i]);
+		}
+	}
+
 	useEffect(() => {
 		// Get the canvas context once the component is mounted
 		const canvas = canvasRef.current;
 		const ctx = canvas.getContext('2d');
-		ctxRef.current = ctx;
-		ctx.lineCap = 'round'; // Smooth line edges
+
+		ctx.fillStyle = "white";
+		ctx.strokeStyle = "blue";
+		ctx.lineWidth = 2;
+
+		drawCircles();
+
 
 	}, []);
+
+	const screenToCanvas = (e) => {
+		const canvas = canvasRef.current;
+		const rect = canvas.getBoundingClientRect();
+		return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+	}
 
 	const mouseDown = (e) => {
 		const canvas = canvasRef.current;
 		setIsDrawing(true);
+			
+		const pos = screenToCanvas(e);
+		circle(pos.x, pos.y, 30);
+		drawCircles();
+
 	}
 
 	const mouseUp = () => {
