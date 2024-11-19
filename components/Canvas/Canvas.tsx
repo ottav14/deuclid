@@ -13,6 +13,7 @@ const Canvas = () => {
 	const ctxRef = useRef(null);
 	const circleButtonRef = useRef();
 	const lineButtonRef = useRef();
+	const currentCircleRef = useRef(null);
 	const buttonRefs = {
 		"circle": circleButtonRef,
 	   	"line": lineButtonRef
@@ -24,6 +25,12 @@ const Canvas = () => {
 		circles.push(c);
 
 		return c;
+	}
+
+	const distance = (x1, y1, x2, y2) => {
+		const dx = x2 - x1;
+		const dy = y2 - y1;
+		return Math.sqrt(dx*dx + dy*dy);
 	}
 
 	const drawCircle = (circle) => {
@@ -65,20 +72,23 @@ const Canvas = () => {
 
 	const mouseDown = (e) => {
 		const canvas = canvasRef.current;
-		setIsDrawing(true);
+		setIsDrawing(!isDrawing);
 			
 		const pos = screenToCanvas(e);
-		circle(pos.x, pos.y, 30);
+		currentCircle = circle(pos.x, pos.y, 30);
 		drawCircles();
 
 	}
 
 	const mouseUp = () => {
-		const canvas = canvasRef.current;
-		setIsDrawing(false);
+
 	}
 
 	const mouseMove = (e) => {
+
+		if(isDrawing && currentMode == "circle") {
+			currentCircle.r = distance(e.clientX, e.clientY, currentCircle.x, currentCircle.y);
+		}
 
 	}
 

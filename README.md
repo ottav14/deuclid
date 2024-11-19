@@ -1,1 +1,1 @@
-Eulerian drawing site by Dom Ottaviano.
+Euclidean drawing site by Dom Ottaviano.
