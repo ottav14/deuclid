@@ -1,0 +1,14 @@
+.main {
+	display: flex;
+	text-align:  center;
+}
+
+.canvas {
+	background-color: white;
+	cursor: crosshair;
+}
+
+.controls {
+	display: flex;
+	flex-direction: column;
+}
