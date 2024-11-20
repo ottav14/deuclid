@@ -9,11 +9,11 @@ export default function Home() {
 	return (
 		<>
 			<Head>
-				<title>Deuler</title>
+				<title>Deuclid</title>
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 			<main className={styles.main}>
-				<h1 className={styles.pageTitle}>Deuler</h1>
+				<h1 className={styles.pageTitle}>Deuclid</h1>
 				<div className={styles.interface}>
 					<Canvas />
 				</div>

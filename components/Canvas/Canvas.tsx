@@ -1,3 +1,5 @@
+"use client"
+
 import styles from "./Canvas.module.css";
 import Button from "../Button/Button.tsx";
 import circleIcon from "../../public/icons/circle.svg";
@@ -8,12 +10,12 @@ const Canvas = () => {
 	const canvasRef = useRef(null);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [currentMode, setMode] = useState('circle');
-	const [currentColor, setCurrentColor] = useState('black'); // Default color
-	const circles = [];
+	const [currentCircle, setCurrentCircle] = useState(null);
+	const [circles, setCircles] = useState([]);
+	const [points, setPoints] = useState([]);
 	const ctxRef = useRef(null);
 	const circleButtonRef = useRef();
 	const lineButtonRef = useRef();
-	const currentCircleRef = useRef(null);
 	const buttonRefs = {
 		"circle": circleButtonRef,
 	   	"line": lineButtonRef
@@ -22,9 +24,19 @@ const Canvas = () => {
 	const circle = (x, y, r) => { 
 
 		const c = { x: x, y: y, r: r };
-		circles.push(c);
+		setCircles(previousCircles => [...previousCircles, c]);
+		setCurrentCircle(circles.length);
 
 		return c;
+	}
+
+	const point = (x, y) => { 
+
+		const p = { x: x, y: y };
+		setPoints(previousPoints => [...previousPoints, p]);
+		console.log(points);
+
+		return p;
 	}
 
 	const distance = (x1, y1, x2, y2) => {
@@ -33,13 +45,22 @@ const Canvas = () => {
 		return Math.sqrt(dx*dx + dy*dy);
 	}
 
+	const drawBackground = () => {
+		const canvas = canvasRef.current;
+		const ctx = canvas.getContext('2d');
+
+		ctx.fillStyle = "white";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		
+	}
+
 	const drawCircle = (circle) => {
 		const canvas = canvasRef.current;
 		const ctx = canvas.getContext('2d');
 
+		ctx.strokeStyle = "blue";
 		ctx.beginPath(); 
 		ctx.arc(circle.x, circle.y, circle.r, 0, 2*Math.PI);
-		ctx.fill();
 		ctx.stroke();
 		ctx.closePath();
 	}
@@ -50,17 +71,33 @@ const Canvas = () => {
 		}
 	}
 
+	const drawPoint = (point) => {
+		const canvas = canvasRef.current;
+		const ctx = canvas.getContext('2d');
+
+		ctx.fillStyle = "blue";
+		ctx.beginPath(); 
+		ctx.arc(point.x, point.y, 3, 0, 2*Math.PI);
+		ctx.fill();
+		ctx.closePath();
+	}
+
+	const drawPoints = () => {
+		for(let i=0; i<points.length; i++) {
+			drawPoint(points[i]);
+		}
+	}
+
+	const drawScreen = () => {
+		drawBackground();
+		drawCircles();
+		drawPoints();
+	}
+
 	useEffect(() => {
 		// Get the canvas context once the component is mounted
 		const canvas = canvasRef.current;
 		const ctx = canvas.getContext('2d');
-
-		ctx.fillStyle = "white";
-		ctx.strokeStyle = "blue";
-		ctx.lineWidth = 2;
-
-		drawCircles();
-
 
 	}, []);
 
@@ -71,12 +108,13 @@ const Canvas = () => {
 	}
 
 	const mouseDown = (e) => {
-		const canvas = canvasRef.current;
 		setIsDrawing(!isDrawing);
 			
-		const pos = screenToCanvas(e);
-		currentCircle = circle(pos.x, pos.y, 30);
-		drawCircles();
+		if(!isDrawing) {
+			const pos = screenToCanvas(e);
+			circle(pos.x, pos.y, 30);
+			point(pos.x, pos.y);
+		}
 
 	}
 
@@ -87,7 +125,14 @@ const Canvas = () => {
 	const mouseMove = (e) => {
 
 		if(isDrawing && currentMode == "circle") {
-			currentCircle.r = distance(e.clientX, e.clientY, currentCircle.x, currentCircle.y);
+			let newCircles = circles;
+			let c = circles[currentCircle];
+			let pos = screenToCanvas(e);
+			let d = distance(pos.x, pos.y, c.x, c.y);
+			c.r = d;
+			newCircles[currentCircle] = c;
+			setCircles(newCircles);
+			drawScreen();
 		}
 
 	}
