@@ -146,8 +146,8 @@ const Canvas = () => {
 		<div className={styles.main}>
 			<canvas
 				ref={canvasRef}
-				width="800"
-				height="800"
+				width={window.innerWidth-80}
+				height={window.innerHeight}
 				className={styles.canvas}
 				onMouseDown={mouseDown}
 				onMouseUp={mouseUp}
