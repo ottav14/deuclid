@@ -17,6 +17,9 @@ const Canvas = () => {
 	const [circles, setCircles] = useState([]);
 	const [points, setPoints] = useState([]);
 	const [lines, setLines] = useState([]);
+	const [shiftHeld, setShiftHeld] = useState(false);
+	const [isMoving, setIsMoving] = useState(false);
+	const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 	const ctxRef = useRef(null);
 	const circleButtonRef = useRef();
 	const lineButtonRef = useRef();
@@ -26,7 +29,7 @@ const Canvas = () => {
 	};
 
 	const drawLoop = () => {
-		drawScreen(circles, points, lines, currentCircle, currentPoint, currentLine, canvasRef.current);
+		drawScreen(circles, points, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
 	}
 
 	const point = (x, y) => { 
@@ -58,7 +61,7 @@ const Canvas = () => {
 	const screenToCanvas = (e) => {
 		const canvas = canvasRef.current;
 		const rect = canvas.getBoundingClientRect();
-		return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+		return { x: e.clientX - rect.left - cameraOffset.x, y: e.clientY - rect.top - cameraOffset.y };
 	}
 
 	const distance = (x1, y1, x2, y2) => {
@@ -68,30 +71,41 @@ const Canvas = () => {
 	}
 
 	const mouseDown = (e) => {
-		setIsDrawing(!isDrawing);
-			
-		if(!isDrawing) {
-			const pos = screenToCanvas(e);
-			switch(currentMode) {
-				case "circle":
-					circle(pos.x, pos.y, 30);
-					point(pos.x, pos.y);
-					break;
-				case "line":
-					line(pos.x, pos.y, pos.x, pos.y);
-					point(pos.x, pos.y);
-					break;
+		if(shiftHeld)
+			setIsMoving(true);	
+		else {
+			setIsDrawing(!isDrawing);
+				
+			if(!isDrawing) {
+				const pos = screenToCanvas(e);
+				switch(currentMode) {
+					case "circle":
+						circle(pos.x, pos.y, 30);
+						point(pos.x, pos.y);
+						break;
+					case "line":
+						line(pos.x, pos.y, pos.x, pos.y);
+						point(pos.x, pos.y);
+						break;
+				}
 			}
 		}
 
 	}
 
 	const mouseUp = () => {
-
+		setIsMoving(false);
 	}
 
 	const mouseMove = (e) => {
-		if(isDrawing) {
+		if(isMoving) {
+			setCameraOffset({
+				x: cameraOffset.x + e.movementX,
+				y: cameraOffset.y + e.movementY
+			});
+			drawLoop();
+		}
+		else if(isDrawing) {
 			let pos = screenToCanvas(e);
 			switch(currentMode) {
 				case "circle":
@@ -99,22 +113,33 @@ const Canvas = () => {
 					let c = circles[currentCircle];
 					let d = distance(pos.x, pos.y, c.x, c.y);
 					c.r = d;
-					newCircles[currentCircle] = c;
-					setCircles(newCircles);
 					break;
 				case "line":
 					let newLines = lines;
 					let l = lines[currentLine];
 					l.x2 = pos.x;
 					l.y2 = pos.y;
-					/*
-					newLines[currentLine] = l;
-					setLines(newLines);
-				   */
 					break;
 			}
 			drawLoop();
 		}
+
+	}
+
+	const keyDown = (e) => {
+
+		switch(e.key) {
+			case "Shift":
+				setShiftHeld(true);
+				break;
+
+		}
+		drawLoop();
+	}
+
+	const keyUp = (e) => {
+
+		setShiftHeld(false);
 
 	}
 
@@ -149,9 +174,12 @@ const Canvas = () => {
 				width={window.innerWidth-80}
 				height={window.innerHeight}
 				className={styles.canvas}
+				tabIndex={0}
 				onMouseDown={mouseDown}
 				onMouseUp={mouseUp}
 				onMouseMove={mouseMove}
+				onKeyDown={keyDown}
+				onKeyUp={keyUp}
 			/>
 			<div className={styles.controls}>
 				<Button ref={circleButtonRef} id="circle" image={circleIcon} action={enterCircleMode} state={true} />

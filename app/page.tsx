@@ -13,9 +13,7 @@ export default function Home() {
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 			<main className={styles.main}>
-				<div className={styles.canvas}>
-					<Canvas />
-				</div>
+				<Canvas />
 			</main>
 		</>
 	);
