@@ -19,11 +19,27 @@ const drawPoint = (point, current, cameraOffset, ctx) => {
 	ctx.closePath();
 }
 
-const drawLine = (line, current, cameraOffset, ctx) => {
-	ctx.strokeStyle = "blue";
+const drawLine = (line, current, cameraOffset, canvas, ctx) => {
+	if(line.x1 === line.x2 && line.y1 === line.y2)
+		return
+
+	let m = (line.y2 - line.y1) / (line.x2 - line.x1);
+
+	const b = line.y1 - m * line.x1;
+
+	const p0 = {
+		x: 0,
+		y: b
+	}
+	const p1 = {
+		x: canvas.width,
+		y: m * canvas.width + b
+	}
+
+	ctx.strokeStyle = (current) ? "blue" : "red";
 	ctx.beginPath();
-	ctx.moveTo(line.x1 + cameraOffset.x, line.y1 + cameraOffset.y);
-	ctx.lineTo(line.x2 + cameraOffset.x, line.y2 + cameraOffset.y);
+	ctx.moveTo(p0.x, p0.y);
+	ctx.lineTo(p1.x, p1.y);
 	ctx.stroke();
 	ctx.closePath();
 }
@@ -40,9 +56,9 @@ const drawPoints = (points, currentPoint, cameraOffset, ctx) => {
 	}
 }
 
-const drawLines = (lines, currentLine, cameraOffset, ctx) => {
+const drawLines = (lines, currentLine, cameraOffset, canvas, ctx) => {
 	for(let i=0; i<lines.length; i++) {
-		drawLine(lines[i], (i==currentLine), cameraOffset, ctx);
+		drawLine(lines[i], (i==currentLine), cameraOffset, canvas, ctx);
 	}
 }
 
@@ -51,5 +67,5 @@ export const drawScreen = (circles, points, lines, currentCircle, currentPoint, 
 	drawBackground(canvas, ctx);
 	drawCircles(circles, currentCircle, cameraOffset, ctx);
 	drawPoints(points, currentPoint, cameraOffset, ctx);
-	drawLines(lines, currentLine, cameraOffset, ctx);
+	drawLines(lines, currentLine, cameraOffset, canvas, ctx);
 }

@@ -20,6 +20,8 @@ const Canvas = () => {
 	const [shiftHeld, setShiftHeld] = useState(false);
 	const [isMoving, setIsMoving] = useState(false);
 	const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
+	const [temporaryPoints, setTemporaryPoints] = useState([]);
+	const [drawFlag, setDrawFlag] = useState(false);
 	const ctxRef = useRef(null);
 	const circleButtonRef = useRef();
 	const lineButtonRef = useRef();
@@ -29,10 +31,10 @@ const Canvas = () => {
 	};
 
 	const drawLoop = () => {
-		drawScreen(circles, points, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
+		setDrawFlag(!drawFlag);	
 	}
 
-	const point = (x, y) => { 
+	const point = (x, y, temporary=false) => { 
 		const p = { x: x, y: y };
 		setPoints(previousPoints => [...previousPoints, p]);
 		setCurrentPoint(points.length);
@@ -85,9 +87,16 @@ const Canvas = () => {
 						break;
 					case "line":
 						line(pos.x, pos.y, pos.x, pos.y);
-						point(pos.x, pos.y);
+						point(pos.x, pos.y, true);
 						break;
 				}
+			}
+			else {
+				setPoints([]);
+				setCurrentCircle(null);
+				setCurrentPoint(null);
+				setCurrentLine(null);
+				drawLoop();
 			}
 		}
 
@@ -166,6 +175,12 @@ const Canvas = () => {
 		drawLoop();
 
 	}, []);
+
+	useEffect(() => {
+
+		drawScreen(circles, points, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
+
+	}, [drawFlag]);
 
 	return (
 		<div className={styles.main}>
