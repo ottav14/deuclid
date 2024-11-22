@@ -2,16 +2,27 @@ import styles from "./Button.module.css";
 import Image from 'next/image';
 import { useState, useImperativeHandle, forwardRef } from 'react';
 
-const Button = forwardRef(({ image, action, state = false, setState }, ref) => {
+const Button = forwardRef(({ image, action, state=false, toggle=true, setState }, ref): void => {
 
-	const [isActive, setIsActive] = useState(state);
+	const [isActive, setIsActive] = useState<boolean>(state);
 
-	const onClick = () => {
+	const mouseDown = (): void => {
 		action();
-		setIsActive(!isActive);
+		if(toggle)
+			setIsActive(!isActive);
+		else
+			setIsActive(true);
 	}
 
-	useImperativeHandle(ref, () => ({
+	const mouseUp = (): void => {
+		if(!toggle) {
+			setIsActive(false);
+			console.log("up");
+		}
+
+	}
+
+	useImperativeHandle(ref, (): void => ({
 		setState: (state) => {
 			setIsActive(state);
 		}
@@ -21,7 +32,8 @@ const Button = forwardRef(({ image, action, state = false, setState }, ref) => {
 	return (
 		<button 
 			className={styles.button} 
-			onClick={onClick}
+			onMouseDown={mouseDown}
+			onMouseUp={mouseUp}
 			style={{
 				backgroundColor: isActive ? '#f00' : '#555'
 			}}

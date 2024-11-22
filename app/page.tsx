@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Canvas from '../components/Canvas/Canvas.tsx';
 import Button from '../components/Button/Button.tsx';
 
-export default function Home() {
+const Home = (): HTMLDomElement => {
 	return (
 		<>
 			<Head>
@@ -18,4 +18,4 @@ export default function Home() {
 		</>
 	);
 }
-
+export default Home;
