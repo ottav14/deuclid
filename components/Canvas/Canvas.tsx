@@ -5,7 +5,7 @@ import Button from "../Button/Button.tsx";
 import circleIcon from "../../public/icons/circle.svg";
 import lineIcon from "../../public/icons/line.svg";
 import { useRef, useState, useEffect } from 'react';
-import { drawScreen } from "./draw.tsx";
+import { drawScreen, getClosest } from "./draw.tsx";
 
 const Canvas = () => {
 	const canvasRef = useRef(null);
@@ -36,7 +36,11 @@ const Canvas = () => {
 
 	const point = (x, y, temporary=false) => { 
 		const p = { x: x, y: y };
-		setPoints(previousPoints => [...previousPoints, p]);
+		if(temporary)
+			setTemporaryPoints(previousPoints => [...previousPoints, p]);
+		else
+			setPoints(previousPoints => [...previousPoints, p]);
+
 		setCurrentPoint(points.length);
 
 		return p;
@@ -92,7 +96,7 @@ const Canvas = () => {
 				}
 			}
 			else {
-				setPoints([]);
+				setTemporaryPoints([]);
 				setCurrentCircle(null);
 				setCurrentPoint(null);
 				setCurrentLine(null);
@@ -112,7 +116,6 @@ const Canvas = () => {
 				x: cameraOffset.x + e.movementX,
 				y: cameraOffset.y + e.movementY
 			});
-			drawLoop();
 		}
 		else if(isDrawing) {
 			let pos = screenToCanvas(e);
@@ -130,8 +133,13 @@ const Canvas = () => {
 					l.y2 = pos.y;
 					break;
 			}
-			drawLoop();
 		}
+		else {
+			const closest = getClosest(e.clientX, e.clientY, cameraOffset);
+			console.log(closest.x + " " + closest.y);
+		//	point(closest.x, closest.y, true);
+		}
+		drawLoop();
 
 	}
 
@@ -178,7 +186,7 @@ const Canvas = () => {
 
 	useEffect(() => {
 
-		drawScreen(circles, points, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
+		drawScreen(circles, points, temporaryPoints, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
 
 	}, [drawFlag]);
 
