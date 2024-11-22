@@ -23,9 +23,19 @@ const drawLine = (line, current, cameraOffset, canvas, ctx) => {
 	if(line.x1 === line.x2 && line.y1 === line.y2)
 		return
 
-	let m = (line.y2 - line.y1) / (line.x2 - line.x1);
+	const p = {
+		x: line.x1 + cameraOffset.x,
+		y: line.y1 + cameraOffset.y
+	}
 
-	const b = line.y1 - m * line.x1;
+	const q = {
+		x: line.x2 + cameraOffset.x,
+		y: line.y2 + cameraOffset.y
+	}
+
+	let m = (q.y - p.y) / (q.x - p.x);
+
+	const b = p.y - m * p.x;
 
 	const p0 = {
 		x: 0,
