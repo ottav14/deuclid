@@ -13,6 +13,7 @@ import { Circle, Point, Line } from "../types.ts";
 
 const Canvas = () => {
 	const zoomSpeed = 1.05;
+	const snapTolerance = 20;
 
 	const [currentMode, setMode] = useState<string>('circle');
 	const [currentCircle, setCurrentCircle] = useState<number>(null);
@@ -28,6 +29,7 @@ const Canvas = () => {
 	const [temporaryPoints, setTemporaryPoints] = useState<Point[]>([]);
 	const [lines, setLines] = useState<Line[]>([]);
 	const [cameraOffset, setCameraOffset] = useState<Point>({ x: 0, y: 0 });
+	const [closestPoint, setClosestPoint] = useState<Point>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const circleButtonRef = useRef<HTMLButtonElement>(null);
 	const lineButtonRef = useRef<HTMLButtonElement>(null);
@@ -42,8 +44,8 @@ const Canvas = () => {
 		setDrawFlag(!drawFlag);	
 	}
 
-	const point = (x: number, y: number, temporary: boolean = false): Point => { 
-		const p: Point = { x: x, y: y };
+	const point = (x: number, y: number, temporary: boolean = false, color: string = "blue"): Point => { 
+		const p: Point = { x: x, y: y, color: color};
 		if(temporary)
 			setTemporaryPoints(previousPoints => [...previousPoints, p]);
 		else
@@ -89,13 +91,13 @@ const Canvas = () => {
 			setIsMoving(true);	
 		else {
 			setIsDrawing(!isDrawing);
-				
 			if(!isDrawing) {
-				const pos: Point = screenToCanvas(e);
+				const pos = getClosest(e, cameraOffset, canvasRef.current);
 				switch(currentMode) {
 					case "circle":
 						circle(pos.x, pos.y, 30);
-						point(pos.x, pos.y);
+						if(temporaryPoints.length > 0)
+							temporaryPoints[temporaryPoints.length-1].color = "blue";
 						break;
 					case "line":
 						line(pos.x, pos.y, pos.x, pos.y);
@@ -126,13 +128,16 @@ const Canvas = () => {
 			});
 		}
 		else if(isDrawing) {
-			const pos: Point = screenToCanvas(e);
+			const pos: Point = getClosest(e, cameraOffset, canvasRef.current);
+			const canvas: HTMLCanvasElement = canvasRef.current;
+			setTemporaryPoints([]);
 			switch(currentMode) {
 				case "circle":
 					const newCircles: Circle = circles;
 					const c: Circle = circles[currentCircle];
 					const d: number = distance(pos.x, pos.y, c.x, c.y);
 					c.r = d;
+					point(pos.x, pos.y, true, "grey");
 					break;
 				case "line":
 					const newLines: Line[] = lines;
@@ -142,7 +147,11 @@ const Canvas = () => {
 					break;
 			}
 		}
-		else {
+		const closest = getClosest(e, cameraOffset, canvasRef.current);
+		if(closestPoint === null || closestPoint.x != closest.x || closestPoint.y != closest.y) {
+			setTemporaryPoints([]);
+			point(closest.x, closest.y, true, "grey");
+			setClosestPoint(closest);
 		}
 		drawLoop();
 

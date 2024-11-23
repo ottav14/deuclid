@@ -1,16 +1,16 @@
 import { Circle, Point, Line } from "../types.ts";
 
-const gridDistance: number = 20;
+export const gridResolution: number = 15;
 const pointSize: number = 5;
 
 const onScreen = (x: number, y: number, canvas: number): void => {
 	return x >= 0 && x < canvas.width && y >= 0 && y < canvas.height;
 };
 
-const getGridOffset = (cameraOffset: Point): Point => {
+const getGridOffset = (cameraOffset: Point, canvas: HTMLCanvasElement): Point => {
 	return {
-		x: cameraOffset.x % gridDistance,
-		y: cameraOffset.y % gridDistance
+		x: cameraOffset.x % (canvas.width/gridResolution),
+		y: cameraOffset.y % (canvas.width/gridResolution) 
 	};
 }
 
@@ -20,35 +20,21 @@ const drawBackground = (canvas: HTMLCanvasElement, ctx): void => {
 }
 
 const drawGrid = (cameraOffset: Point, canvas: HTMLCanvasElement, ctx): void => {
-	const offset: Point = getGridOffset(cameraOffset);
-	const mid: Point = { x: canvas.width/2, y: canvas.height/2 };
+	const offset: Point = getGridOffset(cameraOffset, canvas);
 
 	ctx.strokeStyle = "black";
 	ctx.beginPath();
-	for(let i: number = 1; i<=canvas.width/gridDistance/2+1; i++) {
+	for(let i: number = 0; i<=gridResolution; i++) {
 
 		// Horizontal
-		ctx.moveTo(mid.x + i*gridDistance + offset.x, 0);
-		ctx.lineTo(mid.x + i*gridDistance + offset.x, canvas.height);
-
-		ctx.moveTo(mid.x - i*gridDistance + offset.x, 0);
-		ctx.lineTo(mid.x - i*gridDistance + offset.x, canvas.height);
+		ctx.moveTo(i*(canvas.width/gridResolution) + offset.x, 0);
+		ctx.lineTo(i*(canvas.width/gridResolution) + offset.x, canvas.height);
 
 		// Vertical
-		ctx.moveTo(0, mid.y + i*gridDistance + offset.y);
-		ctx.lineTo(canvas.width, mid.y + i*gridDistance + offset.y);
-
-		ctx.moveTo(0, mid.y - i*gridDistance+ offset.y);
-		ctx.lineTo(canvas.width, mid.y - i*gridDistance + offset.y);
+		ctx.moveTo(0, i*(canvas.width/gridResolution) + offset.y);
+		ctx.lineTo(canvas.width, i*(canvas.width/gridResolution) + offset.y);
 
 	}
-	// Axis
-	ctx.moveTo(mid.x + offset.x, 0);
-	ctx.lineTo(mid.x + offset.x, canvas.height);
-
-	ctx.moveTo(0, mid.y + offset.y);
-	ctx.lineTo(canvas.width, mid.y + offset.y);
-	
 	ctx.stroke();
 	ctx.closePath();
 }
@@ -68,7 +54,7 @@ const drawCircle = (circle: Circle, current: boolean, cameraOffset: Point, canva
 }
 
 const drawPoint = (point: Point, current: boolean, cameraOffset: Point, ctx): void => {
-	ctx.fillStyle = (current) ? "blue" : "red";
+	ctx.fillStyle = (current) ? point.color : "red";
 	ctx.beginPath(); 
 	ctx.arc(point.x + cameraOffset.x, point.y + cameraOffset.y, pointSize, 0, 2*Math.PI);
 	ctx.fill();
@@ -110,28 +96,16 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, canvas: HTM
 	ctx.closePath();
 }
 
-const drawCircles = (circles: Circle[], currentCircle: number, cameraOffset: Point, canvas: HTMLCanvasElement, ctx): void => {
-	for(let i=0; i<circles.length; i++) {
-		drawCircle(circles[i], (i==currentCircle), cameraOffset, canvas, ctx);
-	}
-}
-
-const drawPoints = (points: Point[], currentPoint: number, temporaryPoints: Points[], cameraOffset: Point, ctx): void => {
-	for(let i=0; i<points.length; i++) {
-		drawPoint(points[i], (i==currentPoint), cameraOffset, ctx);
-	}
-	for(let i=0; i<temporaryPoints.length; i++) {
-		drawPoint(temporaryPoints[i], true, cameraOffset, ctx);
-	}
-}
-
-const drawLines = (lines: Line[], currentLine: number, cameraOffset: Point, canvas: HTMLCanvasElement, ctx): void => {
-	for(let i=0; i<lines.length; i++) {
-		drawLine(lines[i], (i==currentLine), cameraOffset, canvas, ctx);
-	}
+export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset, canvas): Point => {
+	const offset = getGridOffset(cameraOffset, canvas);
+	return {
+		x: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientX-cameraOffset.x) / canvas.width),
+		y: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientY-cameraOffset.y) / canvas.width)
+	};
 }
 
 export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: Point[], lines: Line[], currentCircle: number, currentPoint: number, currentLine: number, cameraOffset: Point, canvas: HTMLCanvasElement) => {
+
 	const ctx = canvas.getContext('2d');
 
 	drawBackground(canvas, ctx);
@@ -140,7 +114,18 @@ export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: 
 	drawGrid(cameraOffset, canvas, ctx);
 
 	ctx.lineWidth = 4;
-	drawCircles(circles, currentCircle, cameraOffset, canvas, ctx);
-	drawPoints(points, currentPoint, temporaryPoints, cameraOffset, ctx);
-	drawLines(lines, currentLine, cameraOffset, canvas, ctx);
+	for(let i=0; i<circles.length; i++) {
+		drawCircle(circles[i], (i==currentCircle), cameraOffset, canvas, ctx);
+	}
+
+	for(let i=0; i<points.length; i++) {
+		drawPoint(points[i], (i==currentPoint), cameraOffset, ctx);
+	}
+	for(let i=0; i<temporaryPoints.length; i++) {
+		drawPoint(temporaryPoints[i], true, cameraOffset, ctx);
+	}
+
+	for(let i=0; i<lines.length; i++) {
+		drawLine(lines[i], (i==currentLine), cameraOffset, canvas, ctx);
+	}
 }

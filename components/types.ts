@@ -6,7 +6,8 @@ export type Circle = {
 
 export type Point = {
 	x: number,
-	y: number
+	y: number,
+	color: string
 };
 
 export type Line = {
