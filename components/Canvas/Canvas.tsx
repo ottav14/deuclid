@@ -9,7 +9,7 @@ import minusIcon from "../../public/icons/minus.svg";
 import { useRef, useState, useEffect } from 'react';
 import { drawScreen, getClosest } from "./draw.ts";
 import { Circle, Point, Line } from "../types.ts";
-
+import { add, sub, mult, dot } from '../linearAlgebra.ts';
 
 const Canvas = () => {
 	const zoomSpeed = 1.05;
@@ -36,15 +36,15 @@ const Canvas = () => {
 	const zoomInRef = useRef<HTMLButtonElement>(null);
 	const zoomOutRef = useRef<HTMLButtonElement>(null);
 	const buttonRefs = {
-		"circle": circleButtonRef,
-	   	"line": lineButtonRef
+		'circle': circleButtonRef,
+	   	'line': lineButtonRef
 	};
 
 	const drawLoop = (): void => {
 		setDrawFlag(!drawFlag);	
 	}
 
-	const point = (x: number, y: number, temporary: boolean = false, color: string = "blue"): Point => { 
+	const point = (x: number, y: number, temporary: boolean = false, color: string = 'blue'): Point => { 
 		const p: Point = { x: x, y: y, color: color};
 		if(temporary)
 			setTemporaryPoints(previousPoints => [...previousPoints, p]);
@@ -86,26 +86,105 @@ const Canvas = () => {
 		return Math.sqrt(dx*dx + dy*dy);
 	}
 
+	const roundToDecimals = (val: number, places: number): number => {
+		const factor = Math.pow(10, places);
+		return Math.round(factor * val) / factor; 
+	}
+
+	const calcCircleIntersections = (): void => {
+		const c1: Circle = circles[currentCircle];
+		const intersections: Point[] = [];
+		// Circle x circle
+		for(let i: number = 0; i < circles.length; i++) {
+			if(i != currentCircle) {
+				const c2: Circle = circles[i];
+				const d: number = roundToDecimals(distance(c1.x, c1.y, c2.x, c2.y), 2);
+				const R: number = roundToDecimals(c1.r + c2.r, 2);
+
+				if(d == R) {
+					const dx: number = roundToDecimals(c1.x - c2.x, 2);
+					const dy: number = roundToDecimals(c1.y - c2.y, 2);
+					const thetaX: number = roundToDecimals(Math.acos(dx / R), 2);
+					const thetaY: number = roundToDecimals(Math.asin(dy / R), 2);
+					const p: Point = {
+						x: c1.x - c1.r * Math.cos(thetaX),
+						y: c1.y - c1.r * Math.sin(thetaY)
+					};
+					point(p.x, p.y);
+				}
+				else if(d < R) {
+					const A: number = 2 * (c2.x - c1.x);
+					const B: number = 2 * (c2.y - c1.y);
+					const C: number = c1.x*c1.x + c1.y*c1.y - c1.r*c1.r - c2.x*c2.x - c2.y*c2.y + c2.r*c2.r;
+					if(B != 0) {
+						const p: number = 1 + A*A / (B*B);
+						const q: number = -2 * c1.x + 2 * A / B * (C / B + c1.y);
+						const r: number = c1.x*c1.x + Math.pow(C / B + c1.y, 2) - c1.r*c1.r;
+						const x1: number = (-q + Math.sqrt(q*q - 4*p*r)) / (2*p);
+						const x2: number = (-q - Math.sqrt(q*q - 4*p*r)) / (2*p);
+						const y1: number = -A / B * x1 - C / B;
+						const y2: number = -A / B * x2 - C / B;
+						point(x1, y1);
+						point(x2, y2);
+					}
+					else {
+						const x: number = -C / A;
+						const k: number = -C / A - c1.x;
+						const y1: number = c1.y + Math.sqrt(c1.r*c1.r - k*k);
+						const y2: number = c1.y - Math.sqrt(c1.r*c1.r - k*k);
+						point(x, y1);
+						point(x, y2);
+					}
+				}
+
+			}
+		}
+		// Circle x line
+		for(let i: number = 0; i < lines.length; i++) {
+			const l = lines[i];
+			const c = circles[currentCircle];
+			const a = (l.y2 - l.y1) / (l.x2 - l.x1);
+			const b = l.y1 - a * l.x1;
+			const p = 1 + a * a;
+			const q = 2 * c.x + 2 * a * b + 2 * a * c.y;
+			const r = c.x*c.x + b*b + 2 * b * c.y + c.y*c.y - c.r*c.r;
+			const d = q*q - 4 * p * r;
+			if(d > 0) {
+				const x1 = (-q + Math.sqrt(q*q - 4*p*r)) / (2*p);
+				const x2 = (-q - Math.sqrt(q*q - 4*p*r)) / (2*p);
+				const y1 = a * x1 + b;
+				const y2 = a * x2 + b;
+				point(x1, y1);
+				point(x2, y2);
+				console.log("yep");
+			}
+		}
+	}
+
 	const mouseDown = (e: React.MouseEvent<HTMLCanvasElement>): void => {
 		if(shiftHeld)
 			setIsMoving(true);	
 		else {
 			setIsDrawing(!isDrawing);
 			if(!isDrawing) {
-				const pos = getClosest(e, cameraOffset, canvasRef.current);
+				const pos: Point = getClosest(e, cameraOffset, canvasRef.current);
 				switch(currentMode) {
-					case "circle":
+					case 'circle':
 						circle(pos.x, pos.y, 30);
 						if(temporaryPoints.length > 0)
-							temporaryPoints[temporaryPoints.length-1].color = "blue";
+							temporaryPoints[temporaryPoints.length-1].color = 'blue';
 						break;
-					case "line":
+					case 'line':
 						line(pos.x, pos.y, pos.x, pos.y);
 						point(pos.x, pos.y, true);
 						break;
 				}
 			}
 			else {
+				switch(currentMode) {
+					case 'circle':
+						calcCircleIntersections();
+				}
 				setTemporaryPoints([]);
 				setCurrentCircle(null);
 				setCurrentPoint(null);
@@ -132,14 +211,14 @@ const Canvas = () => {
 			const canvas: HTMLCanvasElement = canvasRef.current;
 			setTemporaryPoints([]);
 			switch(currentMode) {
-				case "circle":
+				case 'circle':
 					const newCircles: Circle = circles;
 					const c: Circle = circles[currentCircle];
 					const d: number = distance(pos.x, pos.y, c.x, c.y);
 					c.r = d;
-					point(pos.x, pos.y, true, "grey");
+					point(pos.x, pos.y, true, 'grey');
 					break;
-				case "line":
+				case 'line':
 					const newLines: Line[] = lines;
 					const l: Line = lines[currentLine];
 					l.x2 = pos.x;
@@ -150,7 +229,7 @@ const Canvas = () => {
 		const closest = getClosest(e, cameraOffset, canvasRef.current);
 		if(closestPoint === null || closestPoint.x != closest.x || closestPoint.y != closest.y) {
 			setTemporaryPoints([]);
-			point(closest.x, closest.y, true, "grey");
+			point(closest.x, closest.y, true, 'grey');
 			setClosestPoint(closest);
 		}
 		drawLoop();
@@ -160,7 +239,7 @@ const Canvas = () => {
 	const keyDown = (e: React.KeyboardEvent<HTMLCanvasElement>): void => {
 
 		switch(e.key) {
-			case "Shift":
+			case 'Shift':
 				setShiftHeld(true);
 				break;
 
@@ -178,7 +257,7 @@ const Canvas = () => {
 
 		const currentRef: HTMLButtonElement = buttonRefs[currentMode];
 		currentRef.current.setState(false);
-		setMode("circle");
+		setMode('circle');
 		setIsDrawing(false);
 
 	}
@@ -187,7 +266,7 @@ const Canvas = () => {
 		
 		const currentRef = buttonRefs[currentMode]; 
 		currentRef.current.setState(false);
-		setMode("line");
+		setMode('line');
 		setIsDrawing(false);
 
 	}
@@ -204,13 +283,18 @@ const Canvas = () => {
 
 	useEffect((): void => {
 
+		const canvas = canvasRef.current;
+		setCameraOffset({
+			x: canvas.width/2, 
+			y: canvas.height/2
+		});
 		drawLoop();
 
 	}, []);
 
 	useEffect((): void => {
 
-		drawScreen(circles, points, temporaryPoints, lines, currentCircle, currentPoint, currentLine, cameraOffset, canvasRef.current);
+		drawScreen(circles, points, temporaryPoints, lines, currentCircle, currentPoint, currentLine, cameraOffset, zoom, canvasRef.current);
 
 	}, [drawFlag]);
 
@@ -230,12 +314,12 @@ const Canvas = () => {
 			/>
 			<div className={styles.controls}>
 				<div className={styles.modeControls}>
-					<Button ref={circleButtonRef} id="circle" image={circleIcon} action={enterCircleMode} state={true} />
-					<Button ref={lineButtonRef} id="line" image={lineIcon} action={enterLineMode} />
+					<Button ref={circleButtonRef} id='circle' image={circleIcon} action={enterCircleMode} state={true} />
+					<Button ref={lineButtonRef} id='line' image={lineIcon} action={enterLineMode} />
 				</div>
 				<div className={styles.zoomControls}>
-					<Button ref={zoomInRef} id="circle" image={plusIcon} toggle={false} action={zoomIn} />
-					<Button ref={zoomOutRef} id="line" image={minusIcon} toggle={false} action={zoomOut} />
+					<Button ref={zoomInRef} id='circle' image={plusIcon} toggle={false} action={zoomIn} />
+					<Button ref={zoomOutRef} id='line' image={minusIcon} toggle={false} action={zoomOut} />
 				</div>
 			</div>
 		</div>
