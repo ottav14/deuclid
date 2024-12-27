@@ -76,17 +76,31 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, zoom: numbe
 		y: zoom*line.y2 + cameraOffset.y
 	}
 
-	let m: number = (q.y - p.y) / (q.x - p.x);
+	let p0: Point;
+	let p1: Point;
 
-	const b: number = p.y - m * p.x;
-
-	const p0: Point = {
-		x: 0,
-		y: b
+	if(p.x === q.x) {
+		p0 = {
+			x: p.x,
+			y: 0
+		}
+		p1 = {
+			x: p.x,
+			y: canvas.height
+		}
 	}
-	const p1: Point = {
-		x: canvas.width,
-		y: m * canvas.width + b
+	else {
+		const m: number = (q.y - p.y) / (q.x - p.x);
+		const b: number = p.y - m * p.x;
+
+		p0 = {
+			x: 0,
+			y: b
+		}
+		p1 = {
+			x: canvas.width,
+			y: m * canvas.width + b
+		}
 	}
 
 	ctx.strokeStyle = (current) ? 'blue' : 'red';

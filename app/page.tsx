@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Canvas from '../components/Canvas/Canvas.tsx';
 import Button from '../components/Button/Button.tsx';
 
-const Home = (): HTMLDomElement => {
+const Home = () => {
 	return (
 		<>
 			<Head>
