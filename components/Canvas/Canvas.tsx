@@ -140,6 +140,7 @@ const Canvas = () => {
 			}
 		}
 		// Circle x line
+		/*
 		for(let i = 0; i < lines.length; i++) {
 			const l = lines[i];
 			const c = circles[currentCircle];
@@ -159,6 +160,31 @@ const Canvas = () => {
 				console.log("yep");
 			}
 		}
+	   */
+
+
+	}
+
+	const calcLineIntersections = () => {
+
+		const l1: Line = lines[currentLine];
+		const intersections = [];
+		// Line x line
+		for(let i = 0; i < lines.length; i++) {
+			if(i != currentLine) {
+				const l2: Line = lines[i];
+				const a: number = (l1.y2 - l1.y1) / (l1.x2 - l1.x1);
+				const b: number = l1.y1 - a * l1.x1;
+				const c: number = (l2.y2 - l2.y1) / (l2.x2 - l2.x1);
+				const d: number = l2.y1 - c * l2.x1;
+				const p: Point = {
+					x: (d - b) / (a - c),
+					y: ((a*d - a*b + c*d - b*c) / (a - c) + b + d) / 2
+				}
+				point(p.x, p.y);
+			}
+		}	
+
 	}
 
 	const mouseDown = (e) => {
@@ -182,6 +208,10 @@ const Canvas = () => {
 				switch(currentMode) {
 					case 'circle':
 						calcCircleIntersections();
+						break;
+					case 'line':
+						calcLineIntersections();
+						break;
 				}
 				setCurrentCircle(null);
 				setCurrentPoint(null);
