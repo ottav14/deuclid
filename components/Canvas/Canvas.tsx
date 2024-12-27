@@ -171,8 +171,6 @@ const Canvas = () => {
 				switch(currentMode) {
 					case 'circle':
 						circle(pos.x, pos.y, 30);
-						if(temporaryPoints.length > 0)
-							temporaryPoints[temporaryPoints.length-1].color = 'blue';
 						break;
 					case 'line':
 						line(pos.x, pos.y, pos.x, pos.y);
@@ -185,7 +183,6 @@ const Canvas = () => {
 					case 'circle':
 						calcCircleIntersections();
 				}
-				setTemporaryPoints([]);
 				setCurrentCircle(null);
 				setCurrentPoint(null);
 				setCurrentLine(null);
@@ -209,7 +206,6 @@ const Canvas = () => {
 		else if(isDrawing) {
 			const pos = getClosest(e, cameraOffset, canvasRef.current);
 			const canvas = canvasRef.current;
-			setTemporaryPoints([]);
 			switch(currentMode) {
 				case 'circle':
 					const newCircles = circles;
