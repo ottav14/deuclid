@@ -184,6 +184,29 @@ const Canvas = () => {
 			}
 		}	
 
+		// Line x circle
+		for(let i = 0; i < circles.length; i++) {
+			const circ = circles[i];
+			const a = (l1.y2 - l1.y1) / (l1.x2 - l1.x1);
+			const b = l1.y1 - a * l1.x1;
+			const c = circ.x;
+			const d = circ.y;
+
+			const A = a*a + 1;
+			const B = 2*a*b - 2*a*d - 2*c;
+			const C = b*b + c*c + d*d - circ.r*circ.r - 2*b*d;
+
+			const x1 = (-B + Math.sqrt(B*B - 4*A*C)) / (2*A);
+			const x2 = (-B - Math.sqrt(B*B - 4*A*C)) / (2*A);
+
+			const y1 = a*x1 + b;
+			const y2 = a*x2 + b;
+			
+			point(x1, y1);
+			point(x2, y2);
+		}	
+
+
 	}
 
 	const mouseDown = (e) => {
