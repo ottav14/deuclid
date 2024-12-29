@@ -1,0 +1,22 @@
+
+a = (l.y2 - l.y1) / (l.x2 - l.x1)
+b = y - ax
+y = ax + b
+r^2 = (x - c)^2 + (y - d)^2
+
+r^2 = (x - c)^2 + (ax + b - d)^2
+
+r^2 = x^2 - 2cx + c^2 + a^2 * x^2 + abx - adx + abx + b^2 - bd + adx + bd + d^2
+
+r^2 = (a^2 + 1) * x^2 - 2cx + c^2 + 2abx + b^2 + d^2
+
+0 = (a^2 + 1) * x^2 + (2ab - 2c) * x + (b^2 + c^2 + d^2 - r^2)
+
+A = a^2 + 1
+B = 2ab - 2c
+C = b^2 + c^2 + d^2 - r^2
+
+x = (-B +- sqrt(B^2 - 4AC)) / (2A)
+y = ax + b
+
+

@@ -1,2 +1,2 @@
 # TODO
-* implement line-line intersections
+* add circle-line intersections

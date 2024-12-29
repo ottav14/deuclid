@@ -140,27 +140,26 @@ const Canvas = () => {
 			}
 		}
 		// Circle x line
-		/*
 		for(let i = 0; i < lines.length; i++) {
 			const l = lines[i];
-			const c = circles[currentCircle];
 			const a = (l.y2 - l.y1) / (l.x2 - l.x1);
 			const b = l.y1 - a * l.x1;
-			const p = 1 + a * a;
-			const q = 2 * c.x + 2 * a * b + 2 * a * c.y;
-			const r = c.x*c.x + b*b + 2 * b * c.y + c.y*c.y - c.r*c.r;
-			const d = q*q - 4 * p * r;
-			if(d > 0) {
-				const x1 = (-q + Math.sqrt(q*q - 4*p*r)) / (2*p);
-				const x2 = (-q - Math.sqrt(q*q - 4*p*r)) / (2*p);
-				const y1 = a * x1 + b;
-				const y2 = a * x2 + b;
-				point(x1, y1);
-				point(x2, y2);
-				console.log("yep");
-			}
+			const c = c1.x;
+			const d = c1.y;
+
+			const A = a*a + 1;
+			const B = 2*a*b - 2*a*d - 2*c;
+			const C = b*b + c*c + d*d - c1.r*c1.r - 2*b*d;
+
+			const x1 = (-B + Math.sqrt(B*B - 4*A*C)) / (2*A);
+			const x2 = (-B - Math.sqrt(B*B - 4*A*C)) / (2*A);
+
+			const y1 = a*x1 + b;
+			const y2 = a*x2 + b;
+			
+			point(x1, y1);
+			point(x2, y2);
 		}
-	   */
 
 
 	}
