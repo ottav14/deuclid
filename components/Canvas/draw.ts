@@ -42,11 +42,11 @@ const drawBackground = (canvas: HTMLCanvasElement, ctx): void => {
 
 const drawGrid = (cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement, ctx): void => {
 	const offset: Point = getGridOffset(cameraOffset, canvas);
-	const res = gridResolution / zoom;
-
+	const res = Math.ceil(gridResolution / zoom);
+	console.log(res/zoom);
 	ctx.strokeStyle = 'black';
 	ctx.beginPath();
-	for(let i: number = 0; i<=zoom*res; i++) {
+	for(let i: number = 0; i<=res/zoom; i++) {
 
 		// Horizontal
 		ctx.moveTo(i*(canvas.width/res) + offset.x, 0);

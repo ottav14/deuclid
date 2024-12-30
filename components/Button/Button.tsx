@@ -26,7 +26,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 		const mouseUp = () => {
 			if(!toggle) {
 				setIsActive(false);
-				console.log("up");
 			}
 
 		}
