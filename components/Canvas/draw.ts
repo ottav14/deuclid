@@ -3,6 +3,27 @@ import { Circle, Point, Line } from '../types.ts';
 export const gridResolution: number = 30;
 const pointSize: number = 8;
 
+export const distance = (a: Point, b: Point) => {
+	const dx = a.x - b.x;
+	const dy = a.y - b.y;
+	return Math.sqrt(dx*dx + dy*dy);
+}
+
+export const getMousePosition = (e, canvas): Point => {
+	const p: Point = {
+		x: e.clientX - 0.5 * canvas.width,
+		y: e.clientY - 0.5 * canvas.height
+	}
+	return p;
+}
+
+const toScreenSpace = (px: number, py: number, cameraOffset: Point) => {
+	return {
+		x: px + cameraOffset.x,
+		y: py + cameraOffset.y
+	}
+}
+
 const onScreen = (x: number, y: number, canvas: number): void => {
 	return x >= 0 && x < canvas.width && y >= 0 && y < canvas.height;
 };
@@ -111,12 +132,36 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, zoom: numbe
 	ctx.closePath();
 }
 
-export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset, canvas): Point => {
-	const offset = getGridOffset(cameraOffset, canvas);
-	return {
+export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset: Point, canvas, points): Point => {
+	const offset: number = getGridOffset(cameraOffset, canvas);
+	const p0: Point = {
 		x: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientX-cameraOffset.x) / canvas.width),
 		y: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientY-cameraOffset.y) / canvas.width)
-	};
+	}
+	const screen_p0 = toScreenSpace(p0.x, p0.y, cameraOffset);
+
+
+	const mPos: Point = {
+		x: e.clientX,
+		y: e.clientY
+	}
+
+
+	let d: number = distance(mPos, screen_p0);
+	let ix: number = -1;
+	for(let i = 0; i < points.length; i++) {
+		const current: Point = toScreenSpace(points[i].x, points[i].y, cameraOffset);
+		const di: number = distance(mPos, current);
+		if(di < d) {
+			d = di;
+			ix = i;
+		}
+	}
+
+	if(ix === -1)
+		return p0;
+
+	return points[ix];
 }
 
 export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: Point[], lines: Line[], currentCircle: number, currentPoint: number, currentLine: number, cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement) => {

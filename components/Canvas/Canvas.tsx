@@ -7,7 +7,7 @@ import lineIcon from "../../public/icons/line.svg";
 import plusIcon from "../../public/icons/plus.svg";
 import minusIcon from "../../public/icons/minus.svg";
 import { useRef, useState, useEffect } from 'react';
-import { drawScreen, getClosest } from "./draw.ts";
+import { drawScreen, getClosest, distance, getMousePosition } from "./draw.ts";
 import { Circle, Point, Line } from "../types.ts";
 import { add, sub, mult, dot } from '../linearAlgebra.ts';
 
@@ -214,15 +214,14 @@ const Canvas = () => {
 			setIsMoving(true);	
 		else {
 			setIsDrawing(!isDrawing);
-			if(!isDrawing) {
-				const pos = getClosest(e, cameraOffset, canvasRef.current);
+			if(!isDrawing && closestPoint != null) {
 				switch(currentMode) {
 					case 'circle':
-						circle(pos.x, pos.y, 30);
+						circle(closestPoint.x, closestPoint.y, 30);
 						break;
 					case 'line':
-						line(pos.x, pos.y, pos.x, pos.y);
-						point(pos.x, pos.y, true);
+						line(closestPoint.x, closestPoint.y, closestPoint.x, closestPoint.y);
+						point(closestPoint.x, closestPoint.y, true);
 						break;
 				}
 			}
@@ -249,6 +248,16 @@ const Canvas = () => {
 	}
 
 	const mouseMove = (e) => {
+		const closest = getClosest(e, cameraOffset, canvasRef.current, points);
+
+		// Update closestPoint
+		if(closestPoint === null || closestPoint.x != closest.x || closestPoint.y != closest.y) {
+			setTemporaryPoints([]);
+			point(closest.x, closest.y, true, 'grey');
+			setClosestPoint(closest);
+		}
+
+		// Update drawings
 		if(isMoving) {
 			setCameraOffset({
 				x: cameraOffset.x + e.movementX,
@@ -256,30 +265,21 @@ const Canvas = () => {
 			});
 		}
 		else if(isDrawing) {
-			const pos = getClosest(e, cameraOffset, canvasRef.current);
 			const canvas = canvasRef.current;
 			switch(currentMode) {
 				case 'circle':
-					const newCircles = circles;
 					const c = circles[currentCircle];
-					const d = distance(pos.x, pos.y, c.x, c.y);
-					c.r = d;
-					point(pos.x, pos.y, true, 'grey');
+					c.r = distance(closest.x, closest.y, c.x, c.y);
+					point(closest.x, closest.y, true, 'grey');
 					break;
 				case 'line':
-					const newLines = lines;
 					const l = lines[currentLine];
-					l.x2 = pos.x;
-					l.y2 = pos.y;
+					l.x2 = closest.x;
+					l.y2 = closest.y;
 					break;
 			}
 		}
-		const closest = getClosest(e, cameraOffset, canvasRef.current);
-		if(closestPoint === null || closestPoint.x != closest.x || closestPoint.y != closest.y) {
-			setTemporaryPoints([]);
-			point(closest.x, closest.y, true, 'grey');
-			setClosestPoint(closest);
-		}
+
 		drawLoop();
 
 	}
