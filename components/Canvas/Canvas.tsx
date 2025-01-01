@@ -248,7 +248,7 @@ const Canvas = () => {
 	}
 
 	const mouseMove = (e) => {
-		const closest = getClosest(e, cameraOffset, canvasRef.current, points);
+		const closest = getClosest(e, cameraOffset, zoom, canvasRef.current, points);
 
 		// Update closestPoint
 		if(closestPoint === null || closestPoint.x != closest.x || closestPoint.y != closest.y) {

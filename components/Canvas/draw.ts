@@ -17,10 +17,10 @@ export const getMousePosition = (e, canvas): Point => {
 	return p;
 }
 
-const toScreenSpace = (px: number, py: number, cameraOffset: Point) => {
+const toScreenSpace = (px: number, py: number, cameraOffset: Point, zoom: number) => {
 	return {
-		x: px + cameraOffset.x,
-		y: py + cameraOffset.y
+		x: zoom * px + cameraOffset.x,
+		y: zoom * py + cameraOffset.y
 	}
 }
 
@@ -63,10 +63,7 @@ const drawGrid = (cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement, 
 
 const drawCircle = (circle: Circle, current: boolean, cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement, ctx): void => {
 	const center: Point = { x: canvas.width/2, y: canvas.height/2 };
-	const pos: Point = { 
-		x: zoom*circle.x + cameraOffset.x,
-		y: zoom*circle.y + cameraOffset.y
-	};
+	const pos: Point = toScreenSpace(circle.x, circle.y, cameraOffset, zoom);
 	
 	ctx.strokeStyle = (current) ? 'blue' : 'red';
 	ctx.beginPath(); 
@@ -75,10 +72,11 @@ const drawCircle = (circle: Circle, current: boolean, cameraOffset: Point, zoom:
 	ctx.closePath();
 }
 
-const drawPoint = (point: Point, current: boolean, cameraOffset: Point, ctx): void => {
+const drawPoint = (point: Point, current: boolean, cameraOffset: Point, zoom: number, ctx): void => {
+	const pos: Point = toScreenSpace(point.x, point.y, cameraOffset, zoom);
 	ctx.fillStyle = (current) ? point.color : 'red';
 	ctx.beginPath(); 
-	ctx.arc(point.x + cameraOffset.x, point.y + cameraOffset.y, pointSize, 0, 2*Math.PI);
+	ctx.arc(pos.x, pos.y, pointSize, 0, 2*Math.PI);
 	ctx.fill();
 	ctx.closePath();
 }
@@ -87,15 +85,8 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, zoom: numbe
 	if(line.x1 === line.x2 && line.y1 === line.y2)
 		return
 
-	const p: Point = {
-		x: zoom*line.x1 + cameraOffset.x,
-		y: zoom*line.y1 + cameraOffset.y
-	}
-
-	const q: Point = {
-		x: zoom*line.x2 + cameraOffset.x,
-		y: zoom*line.y2 + cameraOffset.y
-	}
+	const p: Point = toScreenSpace(line.x1, line.y1, cameraOffset, zoom);
+	const q: Point = toScreenSpace(line.x2, line.y2, cameraOffset, zoom);
 
 	let p0: Point;
 	let p1: Point;
@@ -132,13 +123,13 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, zoom: numbe
 	ctx.closePath();
 }
 
-export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset: Point, canvas, points): Point => {
+export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset: Point, zoom: number, canvas, points): Point => {
 	const offset: number = getGridOffset(cameraOffset, canvas);
 	const p0: Point = {
 		x: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientX-cameraOffset.x) / canvas.width),
 		y: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientY-cameraOffset.y) / canvas.width)
 	}
-	const screen_p0 = toScreenSpace(p0.x, p0.y, cameraOffset);
+	const screen_p0 = toScreenSpace(p0.x, p0.y, cameraOffset, zoom);
 
 
 	const mPos: Point = {
@@ -150,7 +141,7 @@ export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset:
 	let d: number = distance(mPos, screen_p0);
 	let ix: number = -1;
 	for(let i = 0; i < points.length; i++) {
-		const current: Point = toScreenSpace(points[i].x, points[i].y, cameraOffset);
+		const current: Point = toScreenSpace(points[i].x, points[i].y, cameraOffset, zoom);
 		const di: number = distance(mPos, current);
 		if(di < d) {
 			d = di;
@@ -179,10 +170,10 @@ export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: 
 	}
 
 	for(let i=0; i<points.length; i++) {
-		drawPoint(points[i], (i==currentPoint), cameraOffset, ctx);
+		drawPoint(points[i], (i==currentPoint), cameraOffset, zoom, ctx);
 	}
 	for(let i=0; i<temporaryPoints.length; i++) {
-		drawPoint(temporaryPoints[i], true, cameraOffset, ctx);
+		drawPoint(temporaryPoints[i], true, cameraOffset, zoom, ctx);
 	}
 
 	for(let i=0; i<lines.length; i++) {
