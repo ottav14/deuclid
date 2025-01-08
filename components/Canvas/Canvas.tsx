@@ -6,6 +6,7 @@ import circleIcon from "../../public/icons/circle.svg";
 import lineIcon from "../../public/icons/line.svg";
 import plusIcon from "../../public/icons/plus.svg";
 import minusIcon from "../../public/icons/minus.svg";
+import darkModeIcon from "../../public/icons/dark-mode.svg";
 import { useRef, useState, useEffect } from 'react';
 import { drawScreen, getClosest, distance, getMousePosition } from "./draw.ts";
 import { Circle, Point, Line } from "../types.ts";
@@ -20,6 +21,7 @@ const Canvas = () => {
 	const [currentPoint, setCurrentPoint] = useState(null);
 	const [currentLine, setCurrentLine] = useState(null);
 	const [zoom, setZoom] = useState(1);
+	const [darkModeEnabled, setDarkMode] = useState(false);
 	const [isDrawing, setIsDrawing] = useState(false);
 	const [shiftHeld, setShiftHeld] = useState(false);
 	const [isMoving, setIsMoving] = useState(false);
@@ -35,9 +37,11 @@ const Canvas = () => {
 	const lineButtonRef = useRef(null);
 	const zoomInRef = useRef(null);
 	const zoomOutRef = useRef(null);
+	const darkModeRef = useRef(null);
 	const buttonRefs = {
 		'circle': circleButtonRef,
-	   	'line': lineButtonRef
+	   	'line': lineButtonRef,
+		'darkModeRef': darkModeRef
 	};
 
 	const drawLoop = () => {
@@ -325,7 +329,12 @@ const Canvas = () => {
 	}
 
 	const zoomOut = () => {
-		setZoom(zoom * (2-zoomSpeed));
+		setZoom(zoom / zoomSpeed);
+		drawLoop();
+	}
+
+	const toggleDarkMode = () => {
+		setDarkMode(!darkModeEnabled);
 		drawLoop();
 	}
 
@@ -342,7 +351,7 @@ const Canvas = () => {
 
 	useEffect(() => {
 
-		drawScreen(circles, points, temporaryPoints, lines, currentCircle, currentPoint, currentLine, cameraOffset, zoom, canvasRef.current);
+		drawScreen(circles, points, temporaryPoints, lines, currentCircle, currentPoint, currentLine, cameraOffset, zoom, darkModeEnabled, canvasRef.current);
 
 	}, [drawFlag]);
 
@@ -365,7 +374,8 @@ const Canvas = () => {
 					<Button ref={circleButtonRef} id='circle' image={circleIcon} action={enterCircleMode} state={true} />
 					<Button ref={lineButtonRef} id='line' image={lineIcon} action={enterLineMode} />
 				</div>
-				<div className={styles.zoomControls}>
+				<div className={styles.bottomControls}>
+					<Button ref={darkModeRef} id='darkMode' image={darkModeIcon} toggle={true} action={toggleDarkMode} />
 					<Button ref={zoomInRef} id='circle' image={plusIcon} toggle={false} action={zoomIn} />
 					<Button ref={zoomOutRef} id='line' image={minusIcon} toggle={false} action={zoomOut} />
 				</div>

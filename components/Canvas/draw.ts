@@ -28,33 +28,41 @@ const onScreen = (x: number, y: number, canvas: number): void => {
 	return x >= 0 && x < canvas.width && y >= 0 && y < canvas.height;
 };
 
-const getGridOffset = (cameraOffset: Point, canvas: HTMLCanvasElement): Point => {
+const getGridOffset = (cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement): Point => {
 	return {
-		x: cameraOffset.x % (canvas.width/gridResolution),
-		y: cameraOffset.y % (canvas.width/gridResolution) 
+		x: cameraOffset.x % (zoom*canvas.width/gridResolution),
+		y: cameraOffset.y % (zoom*canvas.width/gridResolution) 
 	};
 }
 
-const drawBackground = (canvas: HTMLCanvasElement, ctx): void => {
-	ctx.fillStyle = 'white';
+const drawBackground = (darkModeEnabled: boolean, canvas: HTMLCanvasElement, ctx): void => {
+	if(darkModeEnabled)
+		ctx.fillStyle = '#161616';
+	else
+		ctx.fillStyle = 'white';
+
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-const drawGrid = (cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement, ctx): void => {
-	const offset: Point = getGridOffset(cameraOffset, canvas);
+const drawGrid = (cameraOffset: Point, zoom: number, darkModeEnabled: boolean, canvas: HTMLCanvasElement, ctx): void => {
+	const offset: Point = getGridOffset(cameraOffset, zoom, canvas);
 	const res = Math.ceil(gridResolution / zoom);
-	console.log(res/zoom);
-	ctx.strokeStyle = 'black';
+
+	if(darkModeEnabled)
+		ctx.strokeStyle = '#808080';
+	else
+		ctx.strokeStyle = 'black';
+
 	ctx.beginPath();
 	for(let i: number = 0; i<=res/zoom; i++) {
 
 		// Horizontal
-		ctx.moveTo(i*(canvas.width/res) + offset.x, 0);
-		ctx.lineTo(i*(canvas.width/res) + offset.x, canvas.height);
+		ctx.moveTo(i*zoom*canvas.width/res + offset.x, 0);
+		ctx.lineTo(i*zoom*canvas.width/res + offset.x, canvas.height);
 
 		// Vertical
-		ctx.moveTo(0, i*(canvas.width/res) + offset.y);
-		ctx.lineTo(canvas.width, i*(canvas.width/res) + offset.y);
+		ctx.moveTo(0, i*zoom*canvas.width/res + offset.y);
+		ctx.lineTo(canvas.width, i*zoom*canvas.width/res + offset.y);
 
 	}
 	ctx.stroke();
@@ -72,9 +80,16 @@ const drawCircle = (circle: Circle, current: boolean, cameraOffset: Point, zoom:
 	ctx.closePath();
 }
 
-const drawPoint = (point: Point, current: boolean, cameraOffset: Point, zoom: number, ctx): void => {
+const drawPoint = (point: Point, current: boolean, cameraOffset: Point, zoom: number, darkModeEnabled: boolean, ctx): void => {
 	const pos: Point = toScreenSpace(point.x, point.y, cameraOffset, zoom);
-	ctx.fillStyle = (current) ? point.color : 'red';
+
+	if(current)
+		ctx.fillStyle = '#888';
+	else if(darkModeEnabled)
+		ctx.fillStyle = '#fff';
+	else
+		ctx.fillStyle = '#000';
+
 	ctx.beginPath(); 
 	ctx.arc(pos.x, pos.y, pointSize, 0, 2*Math.PI);
 	ctx.fill();
@@ -124,7 +139,7 @@ const drawLine = (line: Line, current: boolean, cameraOffset: Point, zoom: numbe
 }
 
 export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset: Point, zoom: number, canvas, points): Point => {
-	const offset: number = getGridOffset(cameraOffset, canvas);
+	const offset: number = getGridOffset(cameraOffset, zoom, canvas);
 	const p0: Point = {
 		x: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientX-cameraOffset.x) / canvas.width),
 		y: (canvas.width/gridResolution)*Math.round(gridResolution * (e.clientY-cameraOffset.y) / canvas.width)
@@ -155,28 +170,28 @@ export const getClosest = (e: React.MouseEvent<HTMLCanvasElement>, cameraOffset:
 	return points[ix];
 }
 
-export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: Point[], lines: Line[], currentCircle: number, currentPoint: number, currentLine: number, cameraOffset: Point, zoom: number, canvas: HTMLCanvasElement) => {
+export const drawScreen = (circles: Circle[], points: Point[], temporaryPoints: Point[], lines: Line[], currentCircle: number, currentPoint: number, currentLine: number, cameraOffset: Point, zoom: number, darkModeEnabled: boolean, canvas: HTMLCanvasElement) => {
 
 	const ctx = canvas.getContext('2d');
 
-	drawBackground(canvas, ctx);
+	drawBackground(darkModeEnabled, canvas, ctx);
 
 	ctx.lineWidth = 1;
-	drawGrid(cameraOffset, zoom, canvas, ctx);
+	drawGrid(cameraOffset, zoom, darkModeEnabled, canvas, ctx);
 
 	ctx.lineWidth = 4;
 	for(let i=0; i<circles.length; i++) {
 		drawCircle(circles[i], (i==currentCircle), cameraOffset, zoom, canvas, ctx);
 	}
 
-	for(let i=0; i<points.length; i++) {
-		drawPoint(points[i], (i==currentPoint), cameraOffset, zoom, ctx);
-	}
-	for(let i=0; i<temporaryPoints.length; i++) {
-		drawPoint(temporaryPoints[i], true, cameraOffset, zoom, ctx);
-	}
-
 	for(let i=0; i<lines.length; i++) {
 		drawLine(lines[i], (i==currentLine), cameraOffset, zoom, canvas, ctx);
+	}
+
+	for(let i=0; i<points.length; i++) {
+		drawPoint(points[i], (i==currentPoint), cameraOffset, zoom, darkModeEnabled, ctx);
+	}
+	for(let i=0; i<temporaryPoints.length; i++) {
+		drawPoint(temporaryPoints[i], true, cameraOffset, zoom, darkModeEnabled, ctx);
 	}
 }
